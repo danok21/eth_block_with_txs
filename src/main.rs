@@ -3,7 +3,6 @@ use web3::types::{BlockId, U64, BlockNumber};
 use std::io::Write;
 use std::fs::File;
 use std::path::Path;
-use tokio::io::AsyncReadExt;
 use std::error::Error;
 use std::fs::OpenOptions;
 use std::io::prelude::*;
@@ -14,19 +13,21 @@ use std::env;
 async fn main() -> web3::Result<()> {
     let transport = web3::transports::Http::new("http://localhost:8540")?;
     let web3 = web3::Web3::new(transport);
-
+    //Get block number
     let block_num = web3.eth().block_number().await?;
     println!("The number of the most recent block is : {:?}", block_num);
 
+    //Get block info by block number
     let block_data = web3.eth().block_with_txs(BlockId::Number(BlockNumber::Number(U64::from(block_num)))).await?;
-    println!("The {:?} block data is： {:?}", block_num, block_data);
+
+    //println!("The {:?} block data is： {:?}", block_num, block_data);
     // let mut  text = File::create("./test.txt").expect("create failed");
     // write!(text,"{:?}",block_data).expect("write failed");//Write into file.
 
     if let Some(data) = block_data {
-        let mut eth_block = serde_json::to_value(&data).unwrap();
-        let mut json = serde_json::to_string_pretty(&data).unwrap();
-        println!("{}", json);
+        let  eth_block = serde_json::to_value(&data).unwrap();
+        let  json = serde_json::to_string_pretty(&data).unwrap();
+       // println!("{}", json);
 
         //block_head
         let hash = eth_block["hash"].as_str().unwrap();
@@ -45,12 +46,11 @@ async fn main() -> web3::Result<()> {
         let timestamp = eth_block["timestamp"].as_str().unwrap();
         let difficulty = eth_block["difficulty"].as_str().unwrap();
         let total_difficulty = eth_block["totalDifficulty"].as_str().unwrap();
-        let seal_fields = "[]";
-        let uncles = "[]";
-        let size = eth_block["size"].as_str().unwrap();
-        let mix_hash = "null";
-        let nonce = "null";
-        println!("{:?}",seal_fields);
+        let seal_fields = "[]";//TODO
+        let uncles = "[]";//TODO
+        let mix_hash = eth_block["mixHash"].as_str().unwrap_or("null");
+        let nonce = eth_block["nonce"].as_str().unwrap_or("null");
+
         let tx = eth_block["transactions"].as_array().unwrap();//
 
         //block_tx
@@ -73,6 +73,7 @@ async fn main() -> web3::Result<()> {
                 let s = i["s"].as_str().unwrap();
                 let raw = i["raw"].as_str().unwrap();
             println!("{}",input);
+
         }
 
     }
